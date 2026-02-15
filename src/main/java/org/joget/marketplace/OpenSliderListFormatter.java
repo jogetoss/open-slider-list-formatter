@@ -25,7 +25,7 @@ public class OpenSliderListFormatter extends DataListColumnFormatDefault {
 
     @Override
     public String getVersion() {
-        return "8.0.4";
+        return "8.0.5";
     }
 
     @Override
@@ -114,12 +114,110 @@ public class OpenSliderListFormatter extends DataListColumnFormatDefault {
 
             PluginManager pluginManager = (PluginManager) AppUtil.getApplicationContext().getBean("pluginManager");
             Map model = new HashMap();
+            boolean multiTabEnabled = "true".equalsIgnoreCase(getPropertyString("multiTabSlider"));
+
             model.put("element", this);
             if (getPropertyString("width") != null) {
                 model.put("width", getPropertyString("width"));
             } else {
                 model.put("width", "50%");
             }
+            model.put("dockBackground",
+                    (getPropertyString("dockBackground") != null && !getPropertyString("dockBackground").isEmpty())
+                    ? getPropertyString("dockBackground")
+                    : "linear-gradient(135deg, rgba(17, 23, 53, 0.95), rgba(33, 45, 85, 0.95))");
+
+            model.put("multiTabEnabled", multiTabEnabled);
+
+            model.put("tabBackground",
+                    (getPropertyString("tabBackground") != null && !getPropertyString("tabBackground").isEmpty())
+                    ? getPropertyString("tabBackground")
+                    : "#ffffff1f");
+
+            model.put("tabActiveBackground",
+                    (getPropertyString("tabActiveBackground") != null && !getPropertyString("tabActiveBackground").isEmpty())
+                    ? getPropertyString("tabActiveBackground")
+                    : "#007bff");
+
+            model.put("tabTextColor",
+                    (getPropertyString("tabTextColor") != null && !getPropertyString("tabTextColor").isEmpty())
+                    ? getPropertyString("tabTextColor")
+                    : "#ffffffe6");
+
+            model.put("tabPadding",
+                    (getPropertyString("tabPadding") != null && !getPropertyString("tabPadding").isEmpty())
+                    ? getPropertyString("tabPadding")
+                    : "8px 16px");
+
+            model.put("tabMinWidth",
+                    (getPropertyString("tabMinWidth") != null && !getPropertyString("tabMinWidth").isEmpty())
+                    ? getPropertyString("tabMinWidth")
+                    : "120px");
+
+            model.put("tabMaxWidth",
+                    (getPropertyString("tabMaxWidth") != null && !getPropertyString("tabMaxWidth").isEmpty())
+                    ? getPropertyString("tabMaxWidth")
+                    : "200px");
+
+            model.put("tabListGap",
+                    (getPropertyString("tabListGap") != null && !getPropertyString("tabListGap").isEmpty())
+                    ? getPropertyString("tabListGap")
+                    : "6px");
+
+            model.put("tabListPadding",
+                    (getPropertyString("tabListPadding") != null && !getPropertyString("tabListPadding").isEmpty())
+                    ? getPropertyString("tabListPadding")
+                    : "0 8px");
+
+            model.put("tabCloseButtonOpacity",
+                    (getPropertyString("tabCloseButtonOpacity") != null && !getPropertyString("tabCloseButtonOpacity").isEmpty())
+                    ? getPropertyString("tabCloseButtonOpacity")
+                    : "0.7");
+
+            model.put("buttonBackground",
+                    (getPropertyString("buttonBackground") != null && !getPropertyString("buttonBackground").isEmpty())
+                    ? getPropertyString("buttonBackground")
+                    : "#6c757d26");
+
+            model.put("buttonHoverBackground",
+                    (getPropertyString("buttonHoverBackground") != null && !getPropertyString("buttonHoverBackground").isEmpty())
+                    ? getPropertyString("buttonHoverBackground")
+                    : "#dc3545cc");
+
+            model.put("controlButtonSize",
+                    (getPropertyString("controlButtonSize") != null && !getPropertyString("controlButtonSize").isEmpty())
+                    ? getPropertyString("controlButtonSize")
+                    : "36px");
+
+            model.put("controlsGap",
+                    (getPropertyString("controlsGap") != null && !getPropertyString("controlsGap").isEmpty())
+                    ? getPropertyString("controlsGap")
+                    : "8px");
+
+            model.put("fontSize",
+                    (getPropertyString("fontSize") != null && !getPropertyString("fontSize").isEmpty())
+                    ? getPropertyString("fontSize")
+                    : "14px");
+
+            model.put("fontWeight",
+                    (getPropertyString("fontWeight") != null && !getPropertyString("fontWeight").isEmpty())
+                    ? getPropertyString("fontWeight")
+                    : "500");
+
+            model.put("borderRadius",
+                    (getPropertyString("borderRadius") != null && !getPropertyString("borderRadius").isEmpty())
+                    ? getPropertyString("borderRadius")
+                    : "16px");
+
+            model.put("dockHeight",
+                    (getPropertyString("dockHeight") != null && !getPropertyString("dockHeight").isEmpty())
+                    ? getPropertyString("dockHeight")
+                    : "60px");
+
+            model.put("dockPadding",
+                    (getPropertyString("dockPadding") != null && !getPropertyString("dockPadding").isEmpty())
+                    ? getPropertyString("dockPadding")
+                    : "8px 12px");
 
             content += pluginManager.getPluginFreeMarkerTemplate(model, getClass().getName(), "/template/slider.ftl", null);
 
@@ -169,6 +267,8 @@ public class OpenSliderListFormatter extends DataListColumnFormatDefault {
         String displayStyle = getProperty("link-css-display-type").toString();
         displayStyle += " noAjax no-close";
 
-        return content + "<a class=\"" + displayStyle + "\" onClick=\"openSlider('" + url + "')\">" + getLinkLabel(dataList, row, value) + "</a>";
+        String tabTitle = getLinkLabel(dataList, row, value).replace("'", "\\'");
+        return content + "<a class=\"" + displayStyle + "\" onClick=\"openSlider('" + url + "', '" + tabTitle + "')\">"
+                + getLinkLabel(dataList, row, value) + "</a>";
     }
 }
