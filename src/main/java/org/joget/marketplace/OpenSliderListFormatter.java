@@ -11,6 +11,7 @@ import org.joget.apps.datalist.model.DataList;
 import org.joget.apps.datalist.model.DataListColumn;
 import org.joget.apps.datalist.model.DataListColumnFormatDefault;
 import org.joget.apps.datalist.service.DataListService;
+import org.joget.commons.util.LogUtil;
 import org.joget.plugin.base.PluginManager;
 import org.joget.workflow.util.WorkflowUtil;
 
@@ -25,7 +26,7 @@ public class OpenSliderListFormatter extends DataListColumnFormatDefault {
 
     @Override
     public String getVersion() {
-        return "8.0.5";
+        return "8.0.6";
     }
 
     @Override
@@ -60,6 +61,29 @@ public class OpenSliderListFormatter extends DataListColumnFormatDefault {
 
     public String getHrefColumn() {
         return getPropertyString("hrefColumn");
+    }
+
+    public String getTabNameColumn() {
+        return getPropertyString("tabNameColumn");
+    }
+
+    public String getTabName(DataList dataList, Object row, Object value) {
+        String tabNameColumn = getTabNameColumn();
+
+        if (tabNameColumn != null && !tabNameColumn.isEmpty()) {
+            // Use the specified column for tab name
+            try {
+                Object columnValue = DataListService.evaluateColumnValueFromRow(row, tabNameColumn);
+                if (columnValue != null && !columnValue.toString().trim().isEmpty()) {
+                    return columnValue.toString().trim();
+                }
+            } catch (Exception e) {
+                LogUtil.warn(getClassName(), "Error getting tab name from column '" + tabNameColumn + "': " + e.getMessage());
+            }
+        }
+
+        //fallback to the hyperlink label (previous default behaviour)
+        return getLinkLabel(dataList, row, value);
     }
 
     public String getLinkLabel(DataList dataList, Object row, Object value) {
@@ -267,7 +291,7 @@ public class OpenSliderListFormatter extends DataListColumnFormatDefault {
         String displayStyle = getProperty("link-css-display-type").toString();
         displayStyle += " noAjax no-close";
 
-        String tabTitle = getLinkLabel(dataList, row, value).replace("'", "\\'");
+        String tabTitle = getTabName(dataList, row, value).replace("'", "\\'");
         return content + "<a class=\"" + displayStyle + "\" onClick=\"openSlider('" + url + "', '" + tabTitle + "')\">"
                 + getLinkLabel(dataList, row, value) + "</a>";
     }

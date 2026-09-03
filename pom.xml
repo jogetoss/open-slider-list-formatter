@@ -4,7 +4,7 @@
     <groupId>org.joget.marketplace</groupId>
     <artifactId>open-slider-list-formatter</artifactId>
     <packaging>bundle</packaging>
-    <version>8.0.5</version>
+    <version>8.0.6</version>
     <name>open-slider-list-formatter</name>
     <url>http://www.joget.org</url>
     <build>
@@ -55,6 +55,10 @@
                         <Embed-Directory>dependency</Embed-Directory>
                         <Embed-StripGroup>true</Embed-StripGroup>
                         <DynamicImport-Package>*</DynamicImport-Package>
+
+                        <!-- Plugin Information -->
+                        <Joget-Name>Open Slider List Formatter</Joget-Name>
+                        <Joget-Description>A List Formatter that constructs a link that opens as a slider from the right</Joget-Description>
                     </instructions>
                 </configuration>
             </plugin>
