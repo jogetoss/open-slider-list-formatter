@@ -292,7 +292,7 @@ public class OpenSliderListFormatter extends DataListColumnFormatDefault {
         displayStyle += " noAjax no-close";
 
         String tabTitle = getTabName(dataList, row, value).replace("'", "\\'");
-        return content + "<a class=\"" + displayStyle + "\" onClick=\"openSlider('" + url + "', '" + tabTitle + "')\">"
+        return content + "<a class=\"" + displayStyle + "\" style=\"cursor:pointer;\" onClick=\"openSlider('" + url + "', '" + tabTitle + "')\">"
                 + getLinkLabel(dataList, row, value) + "</a>";
     }
 }
