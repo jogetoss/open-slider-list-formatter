@@ -339,6 +339,9 @@
 
 <script>
 (function(){
+  if (window.__osSliderInitialized) return;
+  window.__osSliderInitialized = true;
+
   document.addEventListener('DOMContentLoaded', function () {
     if (typeof closeSlider === 'function') {
       closeSlider();
@@ -348,6 +351,20 @@
   });
 
   var slider = document.getElementById('slider');
+
+  // Re-parent the slider (and its minimize indicator) to <body>. The formatter
+  // emits this markup inline inside the datalist's row/cell, and staying there
+  // means clicks on our controls bubble through row/cell click handlers the
+  // underlying list/kanban view attaches (e.g. inline-edit auto-save), which
+  // can fire unrelated form submissions. Moving it to <body> also avoids
+  // "position: fixed" being broken by a transformed ancestor.
+  if (slider && slider.parentNode !== document.body) {
+    document.body.appendChild(slider);
+  }
+  var minIndicator = document.getElementById('osMinIndicator');
+  if (minIndicator && minIndicator.parentNode !== document.body) {
+    document.body.appendChild(minIndicator);
+  }
 
   var sliderContent = document.querySelector('#slider .slider-content');
   var handle = document.querySelector('#slider .slider-handle');
@@ -436,6 +453,9 @@
 <#if multiTabEnabled?? && multiTabEnabled>
 <script type="text/javascript">
 (function(){
+  if (window.__osSliderMultiTabInitialized) return;
+  window.__osSliderMultiTabInitialized = true;
+
   var slider = document.getElementById('slider');
   var tabList = document.getElementById('osTabList');
   var contentDiv = document.getElementById('osContent');
