@@ -1,34 +1,45 @@
 <script type="text/javascript">
 (function(){
   // DataListAction has no hook to attach a custom onclick to the <a> it
-  // generates, so instead we delegate: every link this action instance
-  // renders carries the stable "link_<id>" class DataListDecorator always
-  // adds for row actions, and we intercept clicks on that class here.
+  // generates, so this assigns one itself, after the fact, to every link
+  // this action instance renders - identified by the stable "link_<id>"
+  // class DataListDecorator always adds for row actions.
+  //
+  // This sets a literal onclick="" ATTRIBUTE (calling a shared global
+  // function, the same way Joget's own built-in target="popup" action
+  // does with onclick="return dlPopupAction(this, ...)"), rather than
+  // assigning the .onclick PROPERTY directly with a closure: this page's
+  // table/list widget re-renders row markup shortly after load (likely
+  // its responsive/draggable-columns table library), which rebuilds
+  // elements from their outerHTML - carrying an onclick="" attribute
+  // over, but silently dropping a property-only handler with nothing
+  // behind it in the markup.
+  if (typeof window.openSliderTrigger !== 'function') {
+    window.openSliderTrigger = function(anchor){
+      var confirmMsg = anchor.getAttribute('data-os-confirm');
+      if (confirmMsg && !confirm(confirmMsg)) {
+        return false;
+      }
+
+      var href = anchor.getAttribute('href');
+      if (!href) return true;
+
+      if (typeof window.openSlider === 'function') {
+        var title = (anchor.textContent || '').trim() || 'Open';
+        window.openSlider(href, title);
+      }
+      return false;
+    };
+  }
+
   var cls = '${linkClass?js_string}';
+  var confirmation = '${(confirmation!"")?js_string}';
 
-  window.__osSliderTriggersInit = window.__osSliderTriggersInit || {};
-  if (window.__osSliderTriggersInit[cls]) return;
-  window.__osSliderTriggersInit[cls] = true;
-
-  document.addEventListener('click', function(e){
-    // Respect a cancelled confirm() dialog (framework-generated onclick
-    // returning false triggers an automatic preventDefault() before this
-    // bubbles up to us).
-    if (e.defaultPrevented) return;
-
-    var trigger = e.target.closest('a.' + cls);
-    if (!trigger) return;
-
-    var href = trigger.getAttribute('href');
-    if (!href) return;
-
-    e.preventDefault();
-    e.stopPropagation();
-
-    var title = (trigger.textContent || '').trim() || 'Open';
-    if (typeof window.openSlider === 'function') {
-      window.openSlider(href, title);
+  document.querySelectorAll('a.' + cls).forEach(function(trigger){
+    if (confirmation) {
+      trigger.setAttribute('data-os-confirm', confirmation);
     }
+    trigger.setAttribute('onclick', 'return window.openSliderTrigger(this)');
   });
 })();
 </script>

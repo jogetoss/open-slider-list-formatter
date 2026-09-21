@@ -238,6 +238,7 @@ public class OpenSliderDataListAction extends DataListActionDefault implements D
 
         Map triggerModel = new HashMap();
         triggerModel.put("linkClass", "link_" + id);
+        triggerModel.put("confirmation", getConfirmation());
         html += pluginManager.getPluginFreeMarkerTemplate(triggerModel, getClassName(), "/template/sliderActionTrigger.ftl", null);
 
         return html;
