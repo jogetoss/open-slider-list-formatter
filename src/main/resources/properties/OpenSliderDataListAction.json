@@ -1,0 +1,257 @@
+[
+    {
+      "title":"@@org.joget.marketplace.OpenSliderDataListAction.config@@",
+      "properties":[
+            {
+            "label":"@@org.joget.marketplace.OpenSliderDataListAction.hyperlink@@",
+            "name":"href",
+            "type":"textfield",
+            "description":"@@org.joget.marketplace.OpenSliderDataListAction.hyperlink.desc@@"
+            },
+
+            {
+            "name":"parameters",
+            "label":"@@datalist.hyperlinkdatalistaction.hyperlinkParameters@@",
+            "type":"gridCombine",
+            "columns":[
+                    {
+                  "key":"hrefParam",
+                  "label":"@@datalist.hyperlinkdatalistaction.hyperlinkParamName@@"
+                    },
+                    {
+                  "key":"hrefColumn",
+                  "label":"@@datalist.hyperlinkdatalistaction.columnName@@",
+                  "type":"autocomplete",
+                  "options_callback":"DatalistBuilder.getColumnOptions"
+                    }
+                ],
+                "value": [
+                    {
+                        "hrefParam": "id",
+                        "hrefColumn": "id"
+                    }
+                ]
+            },
+            {
+            "label":"@@datalist.hyperlinkdatalistaction.label@@",
+            "name":"label",
+            "type":"textfield",
+            "description":"@@org.joget.marketplace.OpenSliderDataListAction.label.desc@@",
+            "value":"Open",
+            "required":"true"
+            },
+            {
+            "label":"@@datalist.hyperlinkdatalistaction.confirmationMessage@@",
+            "name":"confirmation",
+            "type":"textfield"
+            },
+            {
+            "label":"@@org.joget.marketplace.OpenSliderDataListAction.sliderWidth@@",
+            "name":"width",
+            "type":"textfield",
+            "value":"50%",
+            "required":"true"
+            },
+             {
+                "name": "multiTabSlider",
+                "label": "@@org.joget.marketplace.OpenSliderDataListAction.enableMultiTab@@",
+                "type": "checkbox",
+                "options": [
+                    {
+                        "value": "true",
+                        "label": ""
+                    }
+                ]
+            },
+            {
+            "label":"@@datalist.hyperlinkdatalistaction.visible@@",
+            "name":"visible",
+            "type":"checkbox",
+            "options":[
+                    {"value":"true", "label":""}
+                ]
+            }
+        ]
+    },
+
+    {
+        "title": "@@org.joget.marketplace.OpenSliderDataListAction.dockStyling@@",
+        "properties": [
+            {
+                "label": "@@org.joget.marketplace.OpenSliderDataListAction.dockBackground@@",
+                "name": "dockBackground",
+                "type": "textfield",
+                "value": "linear-gradient(135deg, rgba(17, 23, 53, 0.95), rgba(33, 45, 85, 0.95))",
+                "control_field": "multiTabSlider",
+                "control_value":"true",
+                "description": "@@org.joget.marketplace.OpenSliderDataListAction.dockBackground.desc@@"
+            },
+
+            {
+                "label": "@@org.joget.marketplace.OpenSliderDataListAction.tabBackground@@",
+                "name": "tabBackground",
+                "type": "color",
+                "value": "#ffffff1f",
+                "control_field": "multiTabSlider",
+                "control_value":"true",
+                "description": "@@org.joget.marketplace.OpenSliderDataListAction.tabBackground.desc@@"
+            },
+            {
+                "label": "@@org.joget.marketplace.OpenSliderDataListAction.tabActiveBackground@@",
+                "name": "tabActiveBackground",
+                "type": "color",
+                "value": "#007bff",
+                "control_field": "multiTabSlider",
+                "control_value":"true",
+                "description": "@@org.joget.marketplace.OpenSliderDataListAction.tabActiveBackground.desc@@"
+            },
+            {
+                "label": "@@org.joget.marketplace.OpenSliderDataListAction.tabTextColor@@",
+                "name": "tabTextColor",
+                "type": "color",
+                "value": "#ffffffe6",
+                "control_field": "multiTabSlider",
+                "control_value":"true",
+                "description": "@@org.joget.marketplace.OpenSliderDataListAction.tabTextColor.desc@@"
+            },
+            {
+                "label": "@@org.joget.marketplace.OpenSliderDataListAction.buttonBackground@@",
+                "name": "buttonBackground",
+                "type": "color",
+                "value": "#6c757d26",
+                "control_field": "multiTabSlider",
+                "control_value":"true",
+                "description": "@@org.joget.marketplace.OpenSliderDataListAction.buttonBackground.desc@@"
+            },
+            {
+                "label": "@@org.joget.marketplace.OpenSliderDataListAction.buttonHoverBackground@@",
+                "name": "buttonHoverBackground",
+                "type": "color",
+                "value": "#dc3545cc",
+                "control_field": "multiTabSlider",
+                "control_value":"true",
+                "description": "@@org.joget.marketplace.OpenSliderDataListAction.buttonHoverBackground.desc@@"
+            },
+            {
+                "label": "@@org.joget.marketplace.OpenSliderDataListAction.fontSize@@",
+                "name": "fontSize",
+                "type": "textfield",
+                "value": "14px",
+                "control_field": "multiTabSlider",
+                "control_value":"true",
+                "description": "@@org.joget.marketplace.OpenSliderDataListAction.fontSize.desc@@"
+            },
+            {
+                "label": "@@org.joget.marketplace.OpenSliderDataListAction.fontWeight@@",
+                "name": "fontWeight",
+                "type": "textfield",
+                "value": "500",
+                "control_field": "multiTabSlider",
+                "control_value":"true",
+                "description": "@@org.joget.marketplace.OpenSliderDataListAction.fontWeight.desc@@"
+            },
+            {
+                "label": "@@org.joget.marketplace.OpenSliderDataListAction.borderRadius@@",
+                "name": "borderRadius",
+                "type": "textfield",
+                "value": "16px",
+                "control_field": "multiTabSlider",
+                "control_value":"true",
+                "description": "@@org.joget.marketplace.OpenSliderDataListAction.borderRadius.desc@@"
+            },
+            {
+                "label": "@@org.joget.marketplace.OpenSliderDataListAction.dockHeight@@",
+                "name": "dockHeight",
+                "type": "textfield",
+                "value": "60px",
+                "control_field": "multiTabSlider",
+                "control_value":"true",
+                "description": "@@org.joget.marketplace.OpenSliderDataListAction.dockHeight.desc@@"
+            },
+            {
+                "label": "@@org.joget.marketplace.OpenSliderDataListAction.dockPadding@@",
+                "name": "dockPadding",
+                "type": "textfield",
+                "value": "8px 12px",
+                "control_field": "multiTabSlider",
+                "control_value":"true",
+                "description": "@@org.joget.marketplace.OpenSliderDataListAction.dockPadding.desc@@"
+            },
+            {
+                "label": "@@org.joget.marketplace.OpenSliderDataListAction.tabPadding@@",
+                "name": "tabPadding",
+                "type": "textfield",
+                "value": "8px 16px",
+                "control_field": "multiTabSlider",
+                "control_value":"true",
+                "description": "@@org.joget.marketplace.OpenSliderDataListAction.tabPadding.desc@@"
+            },
+            {
+                "label": "@@org.joget.marketplace.OpenSliderDataListAction.tabMinWidth@@",
+                "name": "tabMinWidth",
+                "type": "textfield",
+                "value": "120px",
+                "control_field": "multiTabSlider",
+                "control_value":"true",
+                "description": "@@org.joget.marketplace.OpenSliderDataListAction.tabMinWidth.desc@@"
+            },
+            {
+                "label": "@@org.joget.marketplace.OpenSliderDataListAction.tabMaxWidth@@",
+                "name": "tabMaxWidth",
+                "type": "textfield",
+                "value": "200px",
+                "control_field": "multiTabSlider",
+                "control_value":"true",
+                "description": "@@org.joget.marketplace.OpenSliderDataListAction.tabMaxWidth.desc@@"
+            },
+            {
+                "label": "@@org.joget.marketplace.OpenSliderDataListAction.controlButtonSize@@",
+                "name": "controlButtonSize",
+                "type": "textfield",
+                "value": "36px",
+                "control_field": "multiTabSlider",
+                "control_value":"true",
+                "description": "@@org.joget.marketplace.OpenSliderDataListAction.controlButtonSize.desc@@"
+            },
+            {
+                "label": "@@org.joget.marketplace.OpenSliderDataListAction.tabListGap@@",
+                "name": "tabListGap",
+                "type": "textfield",
+                "value": "6px",
+                "control_field": "multiTabSlider",
+                "control_value":"true",
+                "description": "@@org.joget.marketplace.OpenSliderDataListAction.tabListGap.desc@@"
+            },
+            {
+                "label": "@@org.joget.marketplace.OpenSliderDataListAction.tabListPadding@@",
+                "name": "tabListPadding",
+                "type": "textfield",
+                "value": "0 8px",
+                "control_field": "multiTabSlider",
+                "control_value":"true",
+                "description": "@@org.joget.marketplace.OpenSliderDataListAction.tabListPadding.desc@@"
+            },
+            {
+                "label": "@@org.joget.marketplace.OpenSliderDataListAction.controlsGap@@",
+                "name": "controlsGap",
+                "type": "textfield",
+                "value": "8px",
+                "control_field": "multiTabSlider",
+                "control_value":"true",
+                "description": "@@org.joget.marketplace.OpenSliderDataListAction.controlsGap.desc@@"
+            },
+            {
+                "label": "@@org.joget.marketplace.OpenSliderDataListAction.tabCloseButtonOpacity@@",
+                "name": "tabCloseButtonOpacity",
+                "type": "textfield",
+                "value": "0.7",
+                "control_field": "multiTabSlider",
+                "control_value":"true",
+                "description": "@@org.joget.marketplace.OpenSliderDataListAction.tabCloseButtonOpacity.desc@@"
+            }
+        ],
+          "control_field": "multiTabSlider",
+          "control_value": "true"
+
+    }
+]
