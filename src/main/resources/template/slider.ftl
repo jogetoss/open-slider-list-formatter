@@ -435,7 +435,12 @@
     slider.classList.remove('minimized');
   };
 
-    // Click outside to close
+    // Click outside to close. Capture phase (matching the multi-tab dock's
+    // own outside-click handler below) so this runs and reads "open"
+    // BEFORE a trigger link's own onclick (e.g. openSliderTrigger, an
+    // attribute-based AT_TARGET-phase handler) has a chance to open the
+    // slider on this very click - otherwise a trigger without the
+    // "no-close" class immediately closes the panel it just opened.
  document.addEventListener('click', function (e) {
 
   if (slider.classList.contains('os-slider')) return;
@@ -445,7 +450,7 @@
       !e.target.closest('.no-close')) {
     window.closeSlider();
   }
-});
+}, true);
 })();
     </script>
 

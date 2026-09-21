@@ -40,6 +40,11 @@
       trigger.setAttribute('data-os-confirm', confirmation);
     }
     trigger.setAttribute('onclick', 'return window.openSliderTrigger(this)');
+    // Lives outside the (body-level) slider panel, so without this the
+    // panel's own "click outside to close" handler would treat clicking
+    // this trigger as a click "outside" it and immediately close what it
+    // just opened.
+    trigger.classList.add('no-close');
   });
 })();
 </script>
