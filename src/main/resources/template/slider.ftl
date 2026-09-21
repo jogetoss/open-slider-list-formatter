@@ -1,8 +1,6 @@
 <div class="slider-container <#if multiTabEnabled?? && multiTabEnabled>os-slider</#if>" id="slider">
-    <div class="slider-handle <#if multiTabEnabled?? && multiTabEnabled>os-resize-handle</#if>" id="<#if multiTabEnabled?? && multiTabEnabled>osResizeHandle</#if>">
-        <#if multiTabEnabled?? && multiTabEnabled>
+    <div class="slider-handle os-resize-handle" id="osResizeHandle">
         <span class="os-resize-grip" aria-hidden="true">⋮⋮</span>
-        </#if>
         </div>
     <#if multiTabEnabled?? && multiTabEnabled>
     <div class="os-dock" id="osDock">
@@ -48,19 +46,8 @@
 
     }
 
-    .slider-handle {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 10px;
-        height: 100%;
-        cursor: ew-resize; /* Horizontal resize cursor */
-        background: #ddd; /* Optional, for visibility */
-
-    }
-
     .slider-content {
-        padding: 20px;
+        padding: 0 10px;
         height: 100%; /* Take full height of slider container */
         box-sizing: border-box; /* Ensure padding is included in height calculation */
 
@@ -95,7 +82,7 @@
     #slider.os-slider.minimized{ right: -100%;
     }
 
-    #slider.os-slider .os-resize-handle{
+    #slider .os-resize-handle{
         position: absolute;
         left: 0;
         top: 0;
@@ -107,7 +94,7 @@
 
     }
 
-    #slider.os-slider .os-resize-handle::after{
+    #slider .os-resize-handle::after{
         content:"";
         position:absolute;
         left:0;
@@ -121,7 +108,7 @@
 
     }
 
-    #slider.os-slider .os-resize-grip{
+    #slider .os-resize-grip{
         position:absolute;
         left:3px;
         top:50%;
@@ -138,7 +125,7 @@
 
     }
 
-    #slider.os-slider.os-resizing iframe{
+    #slider.os-resizing iframe{
         pointer-events: none !important;
 
     }
