@@ -326,8 +326,23 @@
 
 <script>
 (function(){
-  if (window.__osSliderInitialized) return;
-  window.__osSliderInitialized = true;
+  var slider = document.getElementById('slider');
+
+  // Guard on the *element*, not a window-global flag: this template can
+  // end up injected more than once (e.g. a "Planner" page that keeps
+  // several views' worth of this list in the DOM at once, or a
+  // long-lived single-page-app session that carries JS state across
+  // client-side navigations to a page with a brand new #slider). A
+  // window-global flag would then find the flag already set from a
+  // stale, possibly-detached #slider from elsewhere and skip
+  // initializing THIS page's actual element entirely - leaving
+  // window.openSlider bound to a dead element that visibly does
+  // nothing when a trigger link calls it. Tying the guard to the
+  // element itself means a genuinely new #slider always gets set up,
+  // while re-running this same script against the same element (the
+  // ordinary duplicate-injection case) is still a no-op.
+  if (!slider || slider.__osSliderInitialized) return;
+  slider.__osSliderInitialized = true;
 
   document.addEventListener('DOMContentLoaded', function () {
     if (typeof closeSlider === 'function') {
@@ -336,8 +351,6 @@
       try { closeSlider(); } catch(e) {}
     }
   });
-
-  var slider = document.getElementById('slider');
 
   // Re-parent the slider (and its minimize indicator) to <body>. The formatter
   // emits this markup inline inside the datalist's row/cell, and staying there
@@ -445,10 +458,13 @@
 <#if multiTabEnabled?? && multiTabEnabled>
 <script type="text/javascript">
 (function(){
-  if (window.__osSliderMultiTabInitialized) return;
-  window.__osSliderMultiTabInitialized = true;
-
   var slider = document.getElementById('slider');
+
+  // Guarded on the element itself, not a window-global flag - see the
+  // matching comment in the base script above for why.
+  if (!slider || slider.__osSliderMultiTabInitialized) return;
+  slider.__osSliderMultiTabInitialized = true;
+
   var tabList = document.getElementById('osTabList');
   var contentDiv = document.getElementById('osContent');
   var loadingDiv = document.getElementById('osLoading');
