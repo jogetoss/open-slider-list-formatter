@@ -41,6 +41,7 @@
         box-shadow: -2px 0 5px rgba(0, 0, 0, 0.5);
         transition: right 0.3s ease-in-out;
         overflow-y: auto; /* Enable vertical scrolling if content exceeds height */
+        overscroll-behavior: contain; /* Don't chain scroll to the page underneath once this has no more room to scroll */
         z-index: 9999;
         resize: horizontal;
 
@@ -72,6 +73,7 @@
         display: flex;
         flex-direction: column;
         overflow: hidden;
+        overscroll-behavior: contain;
         min-width: 300px;
         max-width: 90%;
 
