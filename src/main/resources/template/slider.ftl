@@ -328,48 +328,54 @@
 
 <script>
 (function(){
-  var slider = document.getElementById('slider');
-
-  // Guard on the *element*, not a window-global flag: this template can
-  // end up injected more than once (e.g. a "Planner" page that keeps
-  // several views' worth of this list in the DOM at once, or a
-  // long-lived single-page-app session that carries JS state across
-  // client-side navigations to a page with a brand new #slider). A
-  // window-global flag would then find the flag already set from a
-  // stale, possibly-detached #slider from elsewhere and skip
-  // initializing THIS page's actual element entirely - leaving
-  // window.openSlider bound to a dead element that visibly does
-  // nothing when a trigger link calls it. Tying the guard to the
-  // element itself means a genuinely new #slider always gets set up,
-  // while re-running this same script against the same element (the
-  // ordinary duplicate-injection case) is still a no-op.
-  if (!slider || slider.__osSliderInitialized) return;
+  // This template can be injected more than once per page (a Kanban page
+  // renders the formatter once per list row and again per card, a
+  // Planner page keeps several views of the list in the DOM, and a
+  // long-lived single-page-app session carries JS state across
+  // client-side navigations), so several #slider elements can share
+  // this id. Each run of this script therefore claims the first #slider
+  // no other run has claimed yet, and does EVERYTHING - element lookups,
+  // listeners, the openSlider() closure - against that one element.
+  //
+  // Two things this must not do:
+  // - Guard with a window-global flag: a stale "already initialized"
+  //   from an earlier render would skip a brand new #slider entirely,
+  //   leaving window.openSlider bound to a dead element.
+  // - Look anything up document-wide ("#slider .slider-content"): that
+  //   resolves to whichever copy is first in tree order, not
+  //   necessarily this run's, so openSlider() would put the iframe into
+  //   one copy's content while opening a different, empty copy (a
+  //   blank panel).
+  var slider = Array.prototype.find.call(
+      document.querySelectorAll('[id="slider"]'),
+      function(el){ return !el.__osSliderInitialized; });
+  if (!slider) return;
   slider.__osSliderInitialized = true;
 
-  document.addEventListener('DOMContentLoaded', function () {
-    if (typeof closeSlider === 'function') {
-      closeSlider();
-    } else {
-      try { closeSlider(); } catch(e) {}
-    }
-  });
+  // This slider's own minimize indicator is its next sibling in the
+  // markup; grab it before anything is moved.
+  var minIndicator = slider.nextElementSibling;
+  if (!minIndicator || minIndicator.id !== 'osMinIndicator') {
+    minIndicator = null;
+  }
 
   // Re-parent the slider (and its minimize indicator) to <body>. The formatter
   // emits this markup inline inside the datalist's row/cell, and staying there
   // means clicks on our controls bubble through row/cell click handlers the
   // underlying list/kanban view attaches (e.g. inline-edit auto-save), which
   // can fire unrelated form submissions. Moving it to <body> also avoids
-  // "position: fixed" being broken by a transformed ancestor.
-  if (slider && slider.parentNode !== document.body) {
+  // "position: fixed" being broken by a transformed ancestor. The indicator
+  // goes right after the slider so the "#slider.minimized + #osMinIndicator"
+  // sibling selector keeps matching.
+  if (slider.parentNode !== document.body) {
     document.body.appendChild(slider);
-  }
-  var minIndicator = document.getElementById('osMinIndicator');
-  if (minIndicator && minIndicator.parentNode !== document.body) {
-    document.body.appendChild(minIndicator);
+    if (minIndicator) {
+      document.body.appendChild(minIndicator);
+    }
   }
 
-  var sliderContent = document.querySelector('#slider .slider-content');
-  var handle = document.querySelector('#slider .slider-handle');
+  var sliderContent = slider.querySelector('.slider-content');
+  var handle = slider.querySelector('.slider-handle');
 
   var isResizing = false;
   var startX = 0;
@@ -415,27 +421,34 @@
 
     slider.classList.remove('os-resizing');
   }
-  window.openSlider = function(url) {
-    if (!sliderContent) return;
-
-    closeSlider();
-    sliderContent.innerHTML = '';
-
-    var iframe = document.createElement('iframe');
-    iframe.src = url;
-    iframe.style.width = '100%';
-    iframe.style.height = '100%';
-    iframe.style.border = 'none';
-
-    sliderContent.appendChild(iframe);
-    slider.classList.add('open');
-  };
-
-  window.closeSlider = function() {
+  function closePanel() {
     if (sliderContent) sliderContent.innerHTML = '';
     slider.classList.remove('open');
     slider.classList.remove('minimized');
-  };
+  }
+
+  // Only single-mode markup has a .slider-content to load into. In
+  // multi-tab markup the multi-tab script below owns openSlider/
+  // closeSlider; claiming them here too would just leave whichever of
+  // the two scripts happened to run last in charge of them.
+  if (sliderContent) {
+    window.openSlider = function(url) {
+      closePanel();
+
+      var iframe = document.createElement('iframe');
+      iframe.src = url;
+      iframe.style.width = '100%';
+      iframe.style.height = '100%';
+      iframe.style.border = 'none';
+
+      sliderContent.appendChild(iframe);
+      slider.classList.add('open');
+    };
+
+    window.closeSlider = closePanel;
+  }
+
+  document.addEventListener('DOMContentLoaded', closePanel);
 
     // Click outside to close. Capture phase (matching the multi-tab dock's
     // own outside-click handler below) so this runs and reads "open"
@@ -450,7 +463,7 @@
   if (slider.classList.contains('open') &&
       !slider.contains(e.target) &&
       !e.target.closest('.no-close')) {
-    window.closeSlider();
+    closePanel();
   }
 }, true);
 })();
@@ -460,21 +473,30 @@
 <#if multiTabEnabled?? && multiTabEnabled>
 <script type="text/javascript">
 (function(){
-  var slider = document.getElementById('slider');
-
-  // Guarded on the element itself, not a window-global flag - see the
-  // matching comment in the base script above for why.
-  if (!slider || slider.__osSliderMultiTabInitialized) return;
+  // Claim this run's own multi-tab #slider and scope every lookup to it,
+  // for the same reasons as the base script above (several #slider
+  // copies can share one id, and document-wide id lookups only ever
+  // return the first).
+  var slider = Array.prototype.find.call(
+      document.querySelectorAll('[id="slider"]'),
+      function(el){ return el.querySelector('.os-dock') && !el.__osSliderMultiTabInitialized; });
+  if (!slider) return;
   slider.__osSliderMultiTabInitialized = true;
 
-  var tabList = document.getElementById('osTabList');
-  var contentDiv = document.getElementById('osContent');
-  var loadingDiv = document.getElementById('osLoading');
-  var tabCount = document.getElementById('osTabCount');
+  // The base script has already moved this slider and its indicator to
+  // <body> together, so the indicator is still its next sibling.
+  var minIndicator = slider.nextElementSibling;
+  if (!minIndicator || minIndicator.id !== 'osMinIndicator') {
+    minIndicator = null;
+  }
 
-  var minBtn = document.getElementById('osMinBtn');
-  var closeBtn = document.getElementById('osCloseBtn');
-  var minIndicator = document.getElementById('osMinIndicator');
+  var tabList = slider.querySelector('#osTabList');
+  var contentDiv = slider.querySelector('#osContent');
+  var loadingDiv = slider.querySelector('#osLoading');
+  var tabCount = minIndicator ? minIndicator.querySelector('#osTabCount') : null;
+
+  var minBtn = slider.querySelector('#osMinBtn');
+  var closeBtn = slider.querySelector('#osCloseBtn');
 
   var tabs = []; 
   var activeId = null;
