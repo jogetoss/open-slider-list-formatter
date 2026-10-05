@@ -391,7 +391,10 @@
   function startResize(e) {
     isResizing = true;
     startX = e.clientX;
-    startWidth = slider.clientWidth;
+    // offsetWidth, not clientWidth: clientWidth leaves out a classic
+    // scrollbar's width, so the panel would jump narrower by that much
+    // as soon as a drag starts.
+    startWidth = slider.offsetWidth;
 
     if (handle && handle.setPointerCapture) {
       handle.setPointerCapture(e.pointerId);
@@ -440,6 +443,11 @@
       iframe.style.width = '100%';
       iframe.style.height = '100%';
       iframe.style.border = 'none';
+      // An iframe is inline by default, which leaves a baseline gap
+      // under it inside .slider-content; that gap makes #slider overflow
+      // by a few pixels and grow a scrollbar of its own next to the
+      // iframe's (a double scrollbar).
+      iframe.style.display = 'block';
 
       sliderContent.appendChild(iframe);
       slider.classList.add('open');
