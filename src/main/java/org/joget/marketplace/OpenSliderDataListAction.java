@@ -239,10 +239,11 @@ public class OpenSliderDataListAction extends DataListActionDefault implements D
 
         // "Open In: Top window" - the slider is installed into the top window on
         // first click instead of being rendered into this page, see sliderTop.ftl
+        // and OpenSliderListFormatter.topSliderHolder()
         String topTemplateId = "";
         if ("top".equals(getPropertyString("openIn"))) {
             topTemplateId = "os-top-slider-action-" + id;
-            html = "<template id=\"" + StringUtil.escapeString(topTemplateId, StringUtil.TYPE_HTML) + "\">" + html + "</template>"
+            html = OpenSliderListFormatter.topSliderHolder(StringUtil.escapeString(topTemplateId, StringUtil.TYPE_HTML), html)
                     + pluginManager.getPluginFreeMarkerTemplate(new HashMap(), getClassName(), "/template/sliderTop.ftl", null);
         }
 

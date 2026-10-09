@@ -1,8 +1,9 @@
 <script>
 (function(){
   // "Open In: Top window" support. The slider markup for this list is
-  // rendered into an inert <template> instead of the page, and only
-  // installed on first use - into the top window when this page is framed
+  // rendered as an inert JSON string (a <script type="application/json">,
+  // see OpenSliderListFormatter.topSliderHolder()) instead of into the
+  // page, and only installed on first use - into the top window when this page is framed
   // by a same-origin page (e.g. a dashboard portlet), otherwise into this
   // page itself. Defined once per page; every list using "Top window"
   // shares it.
@@ -20,13 +21,15 @@
     return window;
   }
 
-  // Copies the template's markup into the target window's document. The
-  // scripts are re-created by that document rather than moved, so they run
-  // as the target window's own code: the slider keeps working after this
-  // frame reloads, navigates or is removed.
-  function install(win, tpl) {
+  // Parses the markup in the target window's document and adds it there.
+  // The scripts are re-created by that document, so they run as the target
+  // window's own code: the slider keeps working after this frame reloads,
+  // navigates or is removed.
+  function install(win, html) {
     var doc = win.document;
-    var nodes = doc.importNode(tpl.content, true);
+    var parser = doc.createElement('template');
+    parser.innerHTML = html;
+    var nodes = doc.importNode(parser.content, true);
     var scripts = Array.prototype.slice.call(nodes.querySelectorAll('script'));
     scripts.forEach(function(s){ s.parentNode.removeChild(s); });
 
@@ -49,11 +52,11 @@
     // Reuse a slider the target window already has (its own list's, or one
     // installed by an earlier click from any frame).
     if (typeof win.openSlider !== 'function') {
-      var tpl = document.getElementById(templateId);
-      if (!tpl) {
+      var holder = document.getElementById(templateId);
+      if (!holder) {
         return true;
       }
-      install(win, tpl);
+      install(win, JSON.parse(holder.textContent));
     }
 
     if (typeof win.openSlider === 'function') {

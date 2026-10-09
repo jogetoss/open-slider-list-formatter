@@ -248,7 +248,7 @@ public class OpenSliderListFormatter extends DataListColumnFormatDefault {
             String sliderHtml = pluginManager.getPluginFreeMarkerTemplate(model, getClass().getName(), "/template/slider.ftl", null);
             if (isOpenInTop()) {
                 // installed into the top window on first click, see sliderTop.ftl
-                content += "<template id=\"" + TOP_TEMPLATE_ID + "\">" + sliderHtml + "</template>"
+                content += topSliderHolder(TOP_TEMPLATE_ID, sliderHtml)
                         + pluginManager.getPluginFreeMarkerTemplate(new HashMap(), getClass().getName(), "/template/sliderTop.ftl", null);
             } else {
                 content += sliderHtml;
@@ -314,6 +314,39 @@ public class OpenSliderListFormatter extends DataListColumnFormatDefault {
      */
     protected boolean isOpenInTop() {
         return "top".equals(getPropertyString("openIn"));
+    }
+
+    /**
+     * The slider markup for "Open In: Top window", kept inert until sliderTop.ftl
+     * installs it: a JSON string in a script element the browser won't run. A
+     * script element (not a &lt;template&gt;) so consumers that strip scripts
+     * from formatted values - e.g. planner-gantt-menu's bar labels - drop it
+     * whole instead of showing the slider's script source as text.
+     */
+    public static String topSliderHolder(String id, String sliderHtml) {
+        return "<script type=\"application/json\" id=\"" + id + "\">" + jsonString(sliderHtml) + "</script>";
+    }
+
+    /** A JSON string literal; every "<" is escaped so nothing can close the script element early. */
+    static String jsonString(String value) {
+        StringBuilder sb = new StringBuilder("\"");
+        for (char c : value.toCharArray()) {
+            switch (c) {
+                case '"': sb.append("\\\""); break;
+                case '\\': sb.append("\\\\"); break;
+                case '\n': sb.append("\\n"); break;
+                case '\r': sb.append("\\r"); break;
+                case '\t': sb.append("\\t"); break;
+                case '<': sb.append("\\u003c"); break;
+                default:
+                    if (c < 0x20 || c == '\u2028' || c == '\u2029') {
+                        sb.append(String.format("\\u%04x", (int) c));
+                    } else {
+                        sb.append(c);
+                    }
+            }
+        }
+        return sb.append('"').toString();
     }
 
     /**
