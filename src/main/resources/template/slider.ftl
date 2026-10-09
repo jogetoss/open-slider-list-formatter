@@ -328,6 +328,57 @@
 
 <script>
 (function(){
+  // Clicks and key presses inside an iframe never reach this document, so
+  // with the slider open over a page of same-origin iframes (e.g.
+  // dashboard portlets) a click inside one wouldn't count as "outside the
+  // slider". This returns a function that also attaches the given
+  // handler (capture phase, like the document-level one) to the document
+  // of every same-origin iframe on the page, nested ones included, except
+  // the slider's own content. Call it whenever the slider opens: frames
+  // added since are picked up, and a frame that navigates gets the
+  // handler again on load. Cross-origin frames can't be reached and are
+  // skipped. Defined once per window, shared by both scripts below.
+  if (typeof window.osSliderFrameListener !== 'function') {
+    window.osSliderFrameListener = function(slider, type, handler) {
+      var key = '__osSlider_' + type + '_' + Math.random().toString(36).slice(2);
+
+      function frameDocument(frame) {
+        try {
+          return frame.contentDocument;
+        } catch (e) {
+          return null;
+        }
+      }
+
+      function attachToFrames(doc, depth) {
+        if (!doc || depth > 3) return;
+        Array.prototype.forEach.call(doc.querySelectorAll('iframe'), function(frame){
+          if (slider.contains(frame)) return;
+          if (!frame[key]) {
+            frame[key] = true;
+            frame.addEventListener('load', function(){
+              attach(frameDocument(frame), depth + 1);
+            });
+          }
+          attach(frameDocument(frame), depth + 1);
+        });
+      }
+
+      function attach(doc, depth) {
+        if (!doc) return;
+        if (!doc[key]) {
+          doc[key] = true;
+          doc.addEventListener(type, handler, true);
+        }
+        attachToFrames(doc, depth);
+      }
+
+      return function() {
+        attachToFrames(document, 0);
+      };
+    };
+  }
+
   // This template can be injected more than once per page (a Kanban page
   // renders the formatter once per list row and again per card, a
   // Planner page keeps several views of the list in the DOM, and a
@@ -451,6 +502,7 @@
 
       sliderContent.appendChild(iframe);
       slider.classList.add('open');
+      listenInFrames();
     };
 
     window.closeSlider = closePanel;
@@ -464,16 +516,18 @@
     // attribute-based AT_TARGET-phase handler) has a chance to open the
     // slider on this very click - otherwise a trigger without the
     // "no-close" class immediately closes the panel it just opened.
- document.addEventListener('click', function (e) {
+  function closeOnOutsideClick(e) {
+    if (slider.classList.contains('os-slider')) return;
 
-  if (slider.classList.contains('os-slider')) return;
-
-  if (slider.classList.contains('open') &&
-      !slider.contains(e.target) &&
-      !e.target.closest('.no-close')) {
-    closePanel();
+    if (slider.classList.contains('open') &&
+        !slider.contains(e.target) &&
+        !(e.target.closest && e.target.closest('.no-close'))) {
+      closePanel();
+    }
   }
-}, true);
+  document.addEventListener('click', closeOnOutsideClick, true);
+  // ...and inside the page's iframes, see osSliderFrameListener above
+  var listenInFrames = window.osSliderFrameListener(slider, 'click', closeOnOutsideClick);
 })();
     </script>
 
@@ -525,6 +579,7 @@
   function ensureOpen(){
     slider.classList.add('open');
     slider.classList.remove('minimized');
+    listenInFrames();
   }
 
   function renderTabs(){
@@ -686,6 +741,7 @@
     if (tabs.length === 0) return;
     slider.classList.remove('minimized');
     slider.classList.add('open');
+    listenInFrames();
   }
 
   window.openSlider = function(url, tabName){
@@ -713,20 +769,20 @@
     restore();
   });
 
-  document.addEventListener('click', function(e){
+  function minimizeOnOutsideClick(e){
     if (!slider.classList.contains('open') || slider.classList.contains('minimized')) return;
 
     var isInside = slider.contains(e.target);
     var isIndicator = minIndicator && minIndicator.contains(e.target);
 
-    if (e.target.closest('.no-close')) return;
+    if (e.target.closest && e.target.closest('.no-close')) return;
 
     if (!isInside && !isIndicator){
       minimize();
     }
-  }, true);
+  }
 
-  document.addEventListener('keydown', function(e){
+  function onKeydown(e){
     if (e.key === 'Escape' && slider.classList.contains('open')) {
       minimize();
     }
@@ -734,7 +790,17 @@
       e.preventDefault();
       closeSlider();
     }
-  });
+  }
+
+  document.addEventListener('click', minimizeOnOutsideClick, true);
+  document.addEventListener('keydown', onKeydown);
+  // ...and inside the page's iframes, see osSliderFrameListener
+  var listenForClicksInFrames = window.osSliderFrameListener(slider, 'click', minimizeOnOutsideClick);
+  var listenForKeysInFrames = window.osSliderFrameListener(slider, 'keydown', onKeydown);
+  function listenInFrames(){
+    listenForClicksInFrames();
+    listenForKeysInFrames();
+  }
 
   (function initResizePersist(){
     var savedWidth = localStorage.getItem('openSliderWidth');
