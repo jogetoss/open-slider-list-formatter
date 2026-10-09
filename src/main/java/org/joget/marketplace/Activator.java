@@ -15,6 +15,7 @@ public class Activator implements BundleActivator {
 
         //Register plugin here
         registrationList.add(context.registerService(OpenSliderListFormatter.class.getName(), new OpenSliderListFormatter(), null));
+        registrationList.add(context.registerService(OpenSliderDataListAction.class.getName(), new OpenSliderDataListAction(), null));
     }
 
     public void stop(BundleContext context) {
