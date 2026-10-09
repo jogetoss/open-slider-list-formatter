@@ -17,6 +17,8 @@ import org.joget.workflow.util.WorkflowUtil;
 
 public class OpenSliderListFormatter extends DataListColumnFormatDefault {
 
+    private static final String TOP_TEMPLATE_ID = "os-top-slider-formatter";
+
     private final static String MESSAGE_PATH = "messages/OpenSliderListFormatter";
 
     @Override
@@ -134,7 +136,7 @@ public class OpenSliderListFormatter extends DataListColumnFormatDefault {
         String content = "";
         HttpServletRequest request = WorkflowUtil.getHttpServletRequest();
 
-        if (request != null && request.getAttribute(getClassName()) == null) {
+        if (request != null && request.getAttribute(renderedAttribute()) == null) {
 
             PluginManager pluginManager = (PluginManager) AppUtil.getApplicationContext().getBean("pluginManager");
             Map model = new HashMap();
@@ -243,9 +245,16 @@ public class OpenSliderListFormatter extends DataListColumnFormatDefault {
                     ? getPropertyString("dockPadding")
                     : "8px 12px");
 
-            content += pluginManager.getPluginFreeMarkerTemplate(model, getClass().getName(), "/template/slider.ftl", null);
+            String sliderHtml = pluginManager.getPluginFreeMarkerTemplate(model, getClass().getName(), "/template/slider.ftl", null);
+            if (isOpenInTop()) {
+                // installed into the top window on first click, see sliderTop.ftl
+                content += "<template id=\"" + TOP_TEMPLATE_ID + "\">" + sliderHtml + "</template>"
+                        + pluginManager.getPluginFreeMarkerTemplate(new HashMap(), getClass().getName(), "/template/sliderTop.ftl", null);
+            } else {
+                content += sliderHtml;
+            }
 
-            request.setAttribute(getClassName(), true);
+            request.setAttribute(renderedAttribute(), true);
         }
 
         String url = getHref();
@@ -292,7 +301,26 @@ public class OpenSliderListFormatter extends DataListColumnFormatDefault {
         displayStyle += " noAjax no-close";
 
         String tabTitle = getTabName(dataList, row, value).replace("'", "\\'");
-        return content + "<a class=\"" + displayStyle + "\" style=\"cursor:pointer;\" onClick=\"openSlider('" + url + "', '" + tabTitle + "')\">"
+        String onClick = isOpenInTop()
+                ? "return osOpenSliderTop('" + url + "', '" + tabTitle + "', '" + TOP_TEMPLATE_ID + "')"
+                : "openSlider('" + url + "', '" + tabTitle + "')";
+        return content + "<a class=\"" + displayStyle + "\" style=\"cursor:pointer;\" onClick=\"" + onClick + "\">"
                 + getLinkLabel(dataList, row, value) + "</a>";
+    }
+
+    /**
+     * "Open In: Top window" - open the slider over the whole page when this list
+     * is shown inside a same-origin iframe (e.g. a dashboard portlet).
+     */
+    protected boolean isOpenInTop() {
+        return "top".equals(getPropertyString("openIn"));
+    }
+
+    /**
+     * The slider markup is rendered once per request; separately per "Open In"
+     * mode, since the two modes' links call different functions.
+     */
+    private String renderedAttribute() {
+        return getClassName() + (isOpenInTop() ? ":top" : "");
     }
 }

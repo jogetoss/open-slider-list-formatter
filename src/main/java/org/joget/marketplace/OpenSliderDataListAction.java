@@ -9,6 +9,7 @@ import org.joget.apps.datalist.model.DataListActionDefault;
 import org.joget.apps.datalist.model.DataListActionResult;
 import org.joget.apps.datalist.model.DataListPluginExtend;
 import org.joget.commons.util.LogUtil;
+import org.joget.commons.util.StringUtil;
 import org.joget.plugin.base.PluginManager;
 
 /**
@@ -236,9 +237,19 @@ public class OpenSliderDataListAction extends DataListActionDefault implements D
             return html;
         }
 
+        // "Open In: Top window" - the slider is installed into the top window on
+        // first click instead of being rendered into this page, see sliderTop.ftl
+        String topTemplateId = "";
+        if ("top".equals(getPropertyString("openIn"))) {
+            topTemplateId = "os-top-slider-action-" + id;
+            html = "<template id=\"" + StringUtil.escapeString(topTemplateId, StringUtil.TYPE_HTML) + "\">" + html + "</template>"
+                    + pluginManager.getPluginFreeMarkerTemplate(new HashMap(), getClassName(), "/template/sliderTop.ftl", null);
+        }
+
         Map triggerModel = new HashMap();
         triggerModel.put("linkClass", "link_" + id);
         triggerModel.put("confirmation", getConfirmation());
+        triggerModel.put("topTemplateId", topTemplateId);
         html += pluginManager.getPluginFreeMarkerTemplate(triggerModel, getClassName(), "/template/sliderActionTrigger.ftl", null);
 
         return html;

@@ -52,6 +52,17 @@
             "value":"50%",
             "required":"true"
             },
+            {
+            "name":"openIn",
+            "label":"@@org.joget.marketplace.OpenSliderDataListAction.openIn@@",
+            "description":"@@org.joget.marketplace.OpenSliderDataListAction.openIn.desc@@",
+            "type":"selectbox",
+            "value":"",
+            "options":[
+                {"value":"","label":"@@org.joget.marketplace.OpenSliderDataListAction.openIn.self@@"},
+                {"value":"top","label":"@@org.joget.marketplace.OpenSliderDataListAction.openIn.top@@"}
+            ]
+            },
              {
                 "name": "multiTabSlider",
                 "label": "@@org.joget.marketplace.OpenSliderDataListAction.enableMultiTab@@",

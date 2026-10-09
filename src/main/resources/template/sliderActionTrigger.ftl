@@ -24,8 +24,12 @@
       var href = anchor.getAttribute('href');
       if (!href) return true;
 
+      var title = (anchor.textContent || '').trim() || 'Open';
+      var topTemplateId = anchor.getAttribute('data-os-top-template');
+      if (topTemplateId && typeof window.osOpenSliderTop === 'function') {
+        return window.osOpenSliderTop(href, title, topTemplateId);
+      }
       if (typeof window.openSlider === 'function') {
-        var title = (anchor.textContent || '').trim() || 'Open';
         window.openSlider(href, title);
       }
       return false;
@@ -34,10 +38,14 @@
 
   var cls = '${linkClass?js_string}';
   var confirmation = '${(confirmation!"")?js_string}';
+  var topTemplateId = '${(topTemplateId!"")?js_string}';
 
   document.querySelectorAll('a.' + cls).forEach(function(trigger){
     if (confirmation) {
       trigger.setAttribute('data-os-confirm', confirmation);
+    }
+    if (topTemplateId) {
+      trigger.setAttribute('data-os-top-template', topTemplateId);
     }
     trigger.setAttribute('onclick', 'return window.openSliderTrigger(this)');
     // Lives outside the (body-level) slider panel, so without this the
