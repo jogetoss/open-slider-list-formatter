@@ -21,6 +21,22 @@
     return window;
   }
 
+  // Adds a node to the target body. Joget's AJAX theme (ajaxtheme.js,
+  // clearDynamicElement) deletes everything after this marker on every menu
+  // navigation. A slider appended after it vanishes on the next navigation
+  // while window.openSlider stays defined, so later clicks would call a
+  // detached slider and do nothing. Placing it before the marker keeps it for
+  // the life of the window. Without the marker (other themes, plain pages)
+  // it is simply appended.
+  function place(doc, node) {
+    var marker = doc.getElementById('ajaxtheme_dynamic_elements_after_this');
+    if (marker && marker.parentNode === doc.body) {
+      doc.body.insertBefore(node, marker);
+    } else {
+      doc.body.appendChild(node);
+    }
+  }
+
   // Parses the markup in the target window's document and adds it there.
   // The scripts are re-created by that document, so they run as the target
   // window's own code: the slider keeps working after this frame reloads,
@@ -33,14 +49,14 @@
     var scripts = Array.prototype.slice.call(nodes.querySelectorAll('script'));
     scripts.forEach(function(s){ s.parentNode.removeChild(s); });
 
-    doc.body.appendChild(nodes);
+    place(doc, nodes);
     scripts.forEach(function(s){
       var el = doc.createElement('script');
       if (s.type) {
         el.type = s.type;
       }
       el.text = s.textContent;
-      doc.body.appendChild(el);
+      place(doc, el);
     });
   }
 
