@@ -43,4 +43,6 @@ This is a single-purpose plugin with three cooperating pieces:
 
 Configuration UI (property form fields, defaults, and `control_field`/`control_value` show/hide wiring for multi-tab-only options) is declared in [`OpenSliderListFormatter.json`](src/main/resources/properties/OpenSliderListFormatter.json); i18n labels/descriptions referenced via `@@key@@` live in [`OpenSliderListFormatter.properties`](src/main/resources/messages/OpenSliderListFormatter.properties). When adding a new configurable style property, all three of these plus the corresponding `model.put(...)` block in `format()` need to stay in sync.
 
-`APP_OpenSliderListFormatterSampleApp-*.jwa` at the repo root is an exported sample Joget app for manually testing the plugin end-to-end after building.
+`APP_OpenSliderListFormatterSampleApp-*.jwa` at the repo root is an exported sample Joget app for manually testing the plugin end-to-end after building. It predates "Open In" and the DataList action.
+
+`demo/OpenSliderDemo.jwa` is a newer sample app covering the formatter (single, multi-tab, Top window) and the DataList action. Regenerate it with `python3 demo/build_demo_app.py`, not part of the Maven build; see [`demo/README.md`](demo/README.md).
