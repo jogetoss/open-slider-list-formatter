@@ -40,15 +40,19 @@
   // Parses the markup in the target window's document and adds it there.
   // The scripts are re-created by that document, so they run as the target
   // window's own code: the slider keeps working after this frame reloads,
-  // navigates or is removed.
+  // navigates or is removed. Returns { slider, open } for the slider it
+  // installed, or null if the slider's script did not take over
+  // window.openSlider.
   function install(win, html) {
     var doc = win.document;
     var parser = doc.createElement('template');
     parser.innerHTML = html;
     var nodes = doc.importNode(parser.content, true);
+    var slider = nodes.querySelector('[id="slider"]');
     var scripts = Array.prototype.slice.call(nodes.querySelectorAll('script'));
     scripts.forEach(function(s){ s.parentNode.removeChild(s); });
 
+    var before = win.openSlider;
     place(doc, nodes);
     scripts.forEach(function(s){
       var el = doc.createElement('script');
@@ -58,6 +62,17 @@
       el.text = s.textContent;
       place(doc, el);
     });
+
+    // The slider script has just defined win.openSlider for this slider.
+    // Keep that function: win.openSlider itself is shared with every slider
+    // on the page, and a "Current frame" list reached later by AJAX
+    // navigation redefines it for a slider of its own, which Joget then
+    // deletes on the next navigation. Calling win.openSlider after that
+    // opened a detached panel and nothing showed.
+    if (!slider || typeof win.openSlider !== 'function' || win.openSlider === before) {
+      return null;
+    }
+    return { slider: slider, open: win.openSlider };
   }
 
   window.osOpenSliderTop = function(url, title, templateId) {
@@ -65,18 +80,20 @@
     var absoluteUrl = new URL(url, document.baseURI).href;
     var win = targetWindow();
 
-    // Reuse a slider the target window already has (its own list's, or one
-    // installed by an earlier click from any frame).
-    if (typeof win.openSlider !== 'function') {
+    // Reuse the slider an earlier click from any frame installed, as long as
+    // it is still in the page.
+    var installed = win.osTopSlider;
+    if (!installed || !installed.slider.isConnected) {
       var holder = document.getElementById(templateId);
       if (!holder) {
         return true;
       }
-      install(win, JSON.parse(holder.textContent));
+      installed = install(win, JSON.parse(holder.textContent));
+      win.osTopSlider = installed;
     }
 
-    if (typeof win.openSlider === 'function') {
-      win.openSlider(absoluteUrl, title);
+    if (installed) {
+      installed.open(absoluteUrl, title);
       return false;
     }
     return true;
