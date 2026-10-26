@@ -17,6 +17,8 @@ import org.joget.workflow.util.WorkflowUtil;
 
 public class OpenSliderListFormatter extends DataListColumnFormatDefault {
 
+    private static final String TOP_TEMPLATE_ID = "os-top-slider-formatter";
+
     private final static String MESSAGE_PATH = "messages/OpenSliderListFormatter";
 
     @Override
@@ -134,7 +136,7 @@ public class OpenSliderListFormatter extends DataListColumnFormatDefault {
         String content = "";
         HttpServletRequest request = WorkflowUtil.getHttpServletRequest();
 
-        if (request != null && request.getAttribute(getClassName()) == null) {
+        if (request != null && request.getAttribute(renderedAttribute()) == null) {
 
             PluginManager pluginManager = (PluginManager) AppUtil.getApplicationContext().getBean("pluginManager");
             Map model = new HashMap();
@@ -243,9 +245,16 @@ public class OpenSliderListFormatter extends DataListColumnFormatDefault {
                     ? getPropertyString("dockPadding")
                     : "8px 12px");
 
-            content += pluginManager.getPluginFreeMarkerTemplate(model, getClass().getName(), "/template/slider.ftl", null);
+            String sliderHtml = pluginManager.getPluginFreeMarkerTemplate(model, getClass().getName(), "/template/slider.ftl", null);
+            if (isOpenInTop()) {
+                // installed into the top window on first click, see sliderTop.ftl
+                content += topSliderHolder(TOP_TEMPLATE_ID, sliderHtml)
+                        + pluginManager.getPluginFreeMarkerTemplate(new HashMap(), getClass().getName(), "/template/sliderTop.ftl", null);
+            } else {
+                content += sliderHtml;
+            }
 
-            request.setAttribute(getClassName(), true);
+            request.setAttribute(renderedAttribute(), true);
         }
 
         String url = getHref();
@@ -292,7 +301,59 @@ public class OpenSliderListFormatter extends DataListColumnFormatDefault {
         displayStyle += " noAjax no-close";
 
         String tabTitle = getTabName(dataList, row, value).replace("'", "\\'");
-        return content + "<a class=\"" + displayStyle + "\" onClick=\"openSlider('" + url + "', '" + tabTitle + "')\">"
+        String onClick = isOpenInTop()
+                ? "return osOpenSliderTop('" + url + "', '" + tabTitle + "', '" + TOP_TEMPLATE_ID + "')"
+                : "openSlider('" + url + "', '" + tabTitle + "')";
+        return content + "<a class=\"" + displayStyle + "\" style=\"cursor:pointer;\" onClick=\"" + onClick + "\">"
                 + getLinkLabel(dataList, row, value) + "</a>";
+    }
+
+    /**
+     * "Open In: Top window" - open the slider over the whole page when this list
+     * is shown inside a same-origin iframe (e.g. a dashboard portlet).
+     */
+    protected boolean isOpenInTop() {
+        return "top".equals(getPropertyString("openIn"));
+    }
+
+    /**
+     * The slider markup for "Open In: Top window", kept inert until sliderTop.ftl
+     * installs it: a JSON string in a script element the browser won't run. A
+     * script element (not a &lt;template&gt;) so consumers that strip scripts
+     * from formatted values - e.g. planner-gantt-menu's bar labels - drop it
+     * whole instead of showing the slider's script source as text.
+     */
+    public static String topSliderHolder(String id, String sliderHtml) {
+        return "<script type=\"application/json\" id=\"" + id + "\">" + jsonString(sliderHtml) + "</script>";
+    }
+
+    /** A JSON string literal; every "<" is escaped so nothing can close the script element early. */
+    static String jsonString(String value) {
+        StringBuilder sb = new StringBuilder("\"");
+        for (char c : value.toCharArray()) {
+            switch (c) {
+                case '"': sb.append("\\\""); break;
+                case '\\': sb.append("\\\\"); break;
+                case '\n': sb.append("\\n"); break;
+                case '\r': sb.append("\\r"); break;
+                case '\t': sb.append("\\t"); break;
+                case '<': sb.append("\\u003c"); break;
+                default:
+                    if (c < 0x20 || c == '\u2028' || c == '\u2029') {
+                        sb.append(String.format("\\u%04x", (int) c));
+                    } else {
+                        sb.append(c);
+                    }
+            }
+        }
+        return sb.append('"').toString();
+    }
+
+    /**
+     * The slider markup is rendered once per request; separately per "Open In"
+     * mode, since the two modes' links call different functions.
+     */
+    private String renderedAttribute() {
+        return getClassName() + (isOpenInTop() ? ":top" : "");
     }
 }

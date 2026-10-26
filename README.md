@@ -6,6 +6,18 @@ A List Formatter that constructs a link that opens as a slider from the right.
 
 To setup and configure this plugin, please see the [documentation](https://dev.joget.org/community/display/SANDBOX2/Open+Slider+List+Formatter).
 
+## Open In
+
+- **Current frame** (default): the slider opens over the page that shows the list.
+- **Top window**: when the list is shown inside a frame on the same site, for example a dashboard
+  portlet, the slider opens over the whole top-level page. It is installed there on first use and then
+  shared by every list on the page that uses Top window. If the top page is on another site, the slider
+  opens in the current frame.
+
+## Demo app
+
+[`demo/OpenSliderDemo.jwa`](demo/OpenSliderDemo.jwa) is a sample app that shows the formatter (single, multi-tab and Top window) and the DataList action. See [`demo/README.md`](demo/README.md) for how to import it.
+
 # Getting Help
 
 JogetOSS is a community-led team for open source software related to the [Joget](https://www.joget.org) no-code/low-code application platform.

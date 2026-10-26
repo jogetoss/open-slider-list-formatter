@@ -1,8 +1,6 @@
 <div class="slider-container <#if multiTabEnabled?? && multiTabEnabled>os-slider</#if>" id="slider">
-    <div class="slider-handle <#if multiTabEnabled?? && multiTabEnabled>os-resize-handle</#if>" id="<#if multiTabEnabled?? && multiTabEnabled>osResizeHandle</#if>">
-        <#if multiTabEnabled?? && multiTabEnabled>
+    <div class="slider-handle os-resize-handle" id="osResizeHandle">
         <span class="os-resize-grip" aria-hidden="true">⋮⋮</span>
-        </#if>
         </div>
     <#if multiTabEnabled?? && multiTabEnabled>
     <div class="os-dock" id="osDock">
@@ -43,24 +41,14 @@
         box-shadow: -2px 0 5px rgba(0, 0, 0, 0.5);
         transition: right 0.3s ease-in-out;
         overflow-y: auto; /* Enable vertical scrolling if content exceeds height */
+        overscroll-behavior: contain; /* Don't chain scroll to the page underneath once this has no more room to scroll */
         z-index: 9999;
         resize: horizontal;
 
     }
 
-    .slider-handle {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 10px;
-        height: 100%;
-        cursor: ew-resize; /* Horizontal resize cursor */
-        background: #ddd; /* Optional, for visibility */
-
-    }
-
     .slider-content {
-        padding: 20px;
+        padding: 0 10px;
         height: 100%; /* Take full height of slider container */
         box-sizing: border-box; /* Ensure padding is included in height calculation */
 
@@ -85,6 +73,7 @@
         display: flex;
         flex-direction: column;
         overflow: hidden;
+        overscroll-behavior: contain;
         min-width: 300px;
         max-width: 90%;
 
@@ -95,7 +84,7 @@
     #slider.os-slider.minimized{ right: -100%;
     }
 
-    #slider.os-slider .os-resize-handle{
+    #slider .os-resize-handle{
         position: absolute;
         left: 0;
         top: 0;
@@ -107,7 +96,7 @@
 
     }
 
-    #slider.os-slider .os-resize-handle::after{
+    #slider .os-resize-handle::after{
         content:"";
         position:absolute;
         left:0;
@@ -121,7 +110,7 @@
 
     }
 
-    #slider.os-slider .os-resize-grip{
+    #slider .os-resize-grip{
         position:absolute;
         left:3px;
         top:50%;
@@ -138,7 +127,7 @@
 
     }
 
-    #slider.os-slider.os-resizing iframe{
+    #slider.os-resizing iframe{
         pointer-events: none !important;
 
     }
@@ -339,18 +328,105 @@
 
 <script>
 (function(){
-  document.addEventListener('DOMContentLoaded', function () {
-    if (typeof closeSlider === 'function') {
-      closeSlider();
-    } else {
-      try { closeSlider(); } catch(e) {}
+  // Clicks and key presses inside an iframe never reach this document, so
+  // with the slider open over a page of same-origin iframes (e.g.
+  // dashboard portlets) a click inside one wouldn't count as "outside the
+  // slider". This returns a function that also attaches the given
+  // handler (capture phase, like the document-level one) to the document
+  // of every same-origin iframe on the page, nested ones included, except
+  // the slider's own content. Call it whenever the slider opens: frames
+  // added since are picked up, and a frame that navigates gets the
+  // handler again on load. Cross-origin frames can't be reached and are
+  // skipped. Defined once per window, shared by both scripts below.
+  if (typeof window.osSliderFrameListener !== 'function') {
+    window.osSliderFrameListener = function(slider, type, handler) {
+      var key = '__osSlider_' + type + '_' + Math.random().toString(36).slice(2);
+
+      function frameDocument(frame) {
+        try {
+          return frame.contentDocument;
+        } catch (e) {
+          return null;
+        }
+      }
+
+      function attachToFrames(doc, depth) {
+        if (!doc || depth > 3) return;
+        Array.prototype.forEach.call(doc.querySelectorAll('iframe'), function(frame){
+          if (slider.contains(frame)) return;
+          if (!frame[key]) {
+            frame[key] = true;
+            frame.addEventListener('load', function(){
+              attach(frameDocument(frame), depth + 1);
+            });
+          }
+          attach(frameDocument(frame), depth + 1);
+        });
+      }
+
+      function attach(doc, depth) {
+        if (!doc) return;
+        if (!doc[key]) {
+          doc[key] = true;
+          doc.addEventListener(type, handler, true);
+        }
+        attachToFrames(doc, depth);
+      }
+
+      return function() {
+        attachToFrames(document, 0);
+      };
+    };
+  }
+
+  // This template can be injected more than once per page (a Kanban page
+  // renders the formatter once per list row and again per card, a
+  // Planner page keeps several views of the list in the DOM, and a
+  // long-lived single-page-app session carries JS state across
+  // client-side navigations), so several #slider elements can share
+  // this id. Each run of this script therefore claims the first #slider
+  // no other run has claimed yet, and does EVERYTHING - element lookups,
+  // listeners, the openSlider() closure - against that one element.
+  //
+  // Two things this must not do:
+  // - Guard with a window-global flag: a stale "already initialized"
+  //   from an earlier render would skip a brand new #slider entirely,
+  //   leaving window.openSlider bound to a dead element.
+  // - Look anything up document-wide ("#slider .slider-content"): that
+  //   resolves to whichever copy is first in tree order, not
+  //   necessarily this run's, so openSlider() would put the iframe into
+  //   one copy's content while opening a different, empty copy (a
+  //   blank panel).
+  var slider = Array.prototype.find.call(
+      document.querySelectorAll('[id="slider"]'),
+      function(el){ return !el.__osSliderInitialized; });
+  if (!slider) return;
+  slider.__osSliderInitialized = true;
+
+  // This slider's own minimize indicator is its next sibling in the
+  // markup; grab it before anything is moved.
+  var minIndicator = slider.nextElementSibling;
+  if (!minIndicator || minIndicator.id !== 'osMinIndicator') {
+    minIndicator = null;
+  }
+
+  // Re-parent the slider (and its minimize indicator) to <body>. The formatter
+  // emits this markup inline inside the datalist's row/cell, and staying there
+  // means clicks on our controls bubble through row/cell click handlers the
+  // underlying list/kanban view attaches (e.g. inline-edit auto-save), which
+  // can fire unrelated form submissions. Moving it to <body> also avoids
+  // "position: fixed" being broken by a transformed ancestor. The indicator
+  // goes right after the slider so the "#slider.minimized + #osMinIndicator"
+  // sibling selector keeps matching.
+  if (slider.parentNode !== document.body) {
+    document.body.appendChild(slider);
+    if (minIndicator) {
+      document.body.appendChild(minIndicator);
     }
-  });
+  }
 
-  var slider = document.getElementById('slider');
-
-  var sliderContent = document.querySelector('#slider .slider-content');
-  var handle = document.querySelector('#slider .slider-handle');
+  var sliderContent = slider.querySelector('.slider-content');
+  var handle = slider.querySelector('.slider-handle');
 
   var isResizing = false;
   var startX = 0;
@@ -366,7 +442,10 @@
   function startResize(e) {
     isResizing = true;
     startX = e.clientX;
-    startWidth = slider.clientWidth;
+    // offsetWidth, not clientWidth: clientWidth leaves out a classic
+    // scrollbar's width, so the panel would jump narrower by that much
+    // as soon as a drag starts.
+    startWidth = slider.offsetWidth;
 
     if (handle && handle.setPointerCapture) {
       handle.setPointerCapture(e.pointerId);
@@ -396,39 +475,59 @@
 
     slider.classList.remove('os-resizing');
   }
-  window.openSlider = function(url) {
-    if (!sliderContent) return;
-
-    closeSlider();
-    sliderContent.innerHTML = '';
-
-    var iframe = document.createElement('iframe');
-    iframe.src = url;
-    iframe.style.width = '100%';
-    iframe.style.height = '100%';
-    iframe.style.border = 'none';
-
-    sliderContent.appendChild(iframe);
-    slider.classList.add('open');
-  };
-
-  window.closeSlider = function() {
+  function closePanel() {
     if (sliderContent) sliderContent.innerHTML = '';
     slider.classList.remove('open');
     slider.classList.remove('minimized');
-  };
-
-    // Click outside to close
- document.addEventListener('click', function (e) {
-
-  if (slider.classList.contains('os-slider')) return;
-
-  if (slider.classList.contains('open') &&
-      !slider.contains(e.target) &&
-      !e.target.closest('.no-close')) {
-    window.closeSlider();
   }
-});
+
+  // Only single-mode markup has a .slider-content to load into. In
+  // multi-tab markup the multi-tab script below owns openSlider/
+  // closeSlider; claiming them here too would just leave whichever of
+  // the two scripts happened to run last in charge of them.
+  if (sliderContent) {
+    window.openSlider = function(url) {
+      closePanel();
+
+      var iframe = document.createElement('iframe');
+      iframe.src = url;
+      iframe.style.width = '100%';
+      iframe.style.height = '100%';
+      iframe.style.border = 'none';
+      // An iframe is inline by default, which leaves a baseline gap
+      // under it inside .slider-content; that gap makes #slider overflow
+      // by a few pixels and grow a scrollbar of its own next to the
+      // iframe's (a double scrollbar).
+      iframe.style.display = 'block';
+
+      sliderContent.appendChild(iframe);
+      slider.classList.add('open');
+      listenInFrames();
+    };
+
+    window.closeSlider = closePanel;
+  }
+
+  document.addEventListener('DOMContentLoaded', closePanel);
+
+    // Click outside to close. Capture phase (matching the multi-tab dock's
+    // own outside-click handler below) so this runs and reads "open"
+    // BEFORE a trigger link's own onclick (e.g. openSliderTrigger, an
+    // attribute-based AT_TARGET-phase handler) has a chance to open the
+    // slider on this very click - otherwise a trigger without the
+    // "no-close" class immediately closes the panel it just opened.
+  function closeOnOutsideClick(e) {
+    if (slider.classList.contains('os-slider')) return;
+
+    if (slider.classList.contains('open') &&
+        !slider.contains(e.target) &&
+        !(e.target.closest && e.target.closest('.no-close'))) {
+      closePanel();
+    }
+  }
+  document.addEventListener('click', closeOnOutsideClick, true);
+  // ...and inside the page's iframes, see osSliderFrameListener above
+  var listenInFrames = window.osSliderFrameListener(slider, 'click', closeOnOutsideClick);
 })();
     </script>
 
@@ -436,15 +535,30 @@
 <#if multiTabEnabled?? && multiTabEnabled>
 <script type="text/javascript">
 (function(){
-  var slider = document.getElementById('slider');
-  var tabList = document.getElementById('osTabList');
-  var contentDiv = document.getElementById('osContent');
-  var loadingDiv = document.getElementById('osLoading');
-  var tabCount = document.getElementById('osTabCount');
+  // Claim this run's own multi-tab #slider and scope every lookup to it,
+  // for the same reasons as the base script above (several #slider
+  // copies can share one id, and document-wide id lookups only ever
+  // return the first).
+  var slider = Array.prototype.find.call(
+      document.querySelectorAll('[id="slider"]'),
+      function(el){ return el.querySelector('.os-dock') && !el.__osSliderMultiTabInitialized; });
+  if (!slider) return;
+  slider.__osSliderMultiTabInitialized = true;
 
-  var minBtn = document.getElementById('osMinBtn');
-  var closeBtn = document.getElementById('osCloseBtn');
-  var minIndicator = document.getElementById('osMinIndicator');
+  // The base script has already moved this slider and its indicator to
+  // <body> together, so the indicator is still its next sibling.
+  var minIndicator = slider.nextElementSibling;
+  if (!minIndicator || minIndicator.id !== 'osMinIndicator') {
+    minIndicator = null;
+  }
+
+  var tabList = slider.querySelector('#osTabList');
+  var contentDiv = slider.querySelector('#osContent');
+  var loadingDiv = slider.querySelector('#osLoading');
+  var tabCount = minIndicator ? minIndicator.querySelector('#osTabCount') : null;
+
+  var minBtn = slider.querySelector('#osMinBtn');
+  var closeBtn = slider.querySelector('#osCloseBtn');
 
   var tabs = []; 
   var activeId = null;
@@ -465,6 +579,7 @@
   function ensureOpen(){
     slider.classList.add('open');
     slider.classList.remove('minimized');
+    listenInFrames();
   }
 
   function renderTabs(){
@@ -626,6 +741,7 @@
     if (tabs.length === 0) return;
     slider.classList.remove('minimized');
     slider.classList.add('open');
+    listenInFrames();
   }
 
   window.openSlider = function(url, tabName){
@@ -653,20 +769,20 @@
     restore();
   });
 
-  document.addEventListener('click', function(e){
+  function minimizeOnOutsideClick(e){
     if (!slider.classList.contains('open') || slider.classList.contains('minimized')) return;
 
     var isInside = slider.contains(e.target);
     var isIndicator = minIndicator && minIndicator.contains(e.target);
 
-    if (e.target.closest('.no-close')) return;
+    if (e.target.closest && e.target.closest('.no-close')) return;
 
     if (!isInside && !isIndicator){
       minimize();
     }
-  }, true);
+  }
 
-  document.addEventListener('keydown', function(e){
+  function onKeydown(e){
     if (e.key === 'Escape' && slider.classList.contains('open')) {
       minimize();
     }
@@ -674,7 +790,17 @@
       e.preventDefault();
       closeSlider();
     }
-  });
+  }
+
+  document.addEventListener('click', minimizeOnOutsideClick, true);
+  document.addEventListener('keydown', onKeydown);
+  // ...and inside the page's iframes, see osSliderFrameListener
+  var listenForClicksInFrames = window.osSliderFrameListener(slider, 'click', minimizeOnOutsideClick);
+  var listenForKeysInFrames = window.osSliderFrameListener(slider, 'keydown', onKeydown);
+  function listenInFrames(){
+    listenForClicksInFrames();
+    listenForKeysInFrames();
+  }
 
   (function initResizePersist(){
     var savedWidth = localStorage.getItem('openSliderWidth');
